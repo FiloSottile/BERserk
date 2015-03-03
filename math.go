@@ -46,16 +46,17 @@ func CubeRootSuffix(suffix []byte) ([]byte, error) {
 }
 
 func CubeRootPrefix(prefix []byte, bitLen int) ([]byte, error) {
-	// This is much simpler than the papers and works better,
-	// there must be a catch. TODO: write feedback
+	// This is much simpler than the papers but might not find the optimal
+	// solution if c > 2^d-1. Anyway since the paper binary searches c it is
+	// not guaranteed to work better.
 
 	bitOffset := uint(bitLen - len(prefix)*8)
 
-	// Calculate the cube upper limit (0xSUFFIXfffffffff...)
+	// Calculate the cube upper limit (0xPREFIXfffffffff...)
 	u := new(big.Int).SetBytes(prefix)
 	u.Add(u.Lsh(u.Add(u, ONE), bitOffset), MINUS_ONE)
 
-	// Calculate the cube lower limit (0xSUFFIX000000000...)
+	// Calculate the cube lower limit (0xPREFIX000000000...)
 	l := new(big.Int).SetBytes(prefix)
 	l.Lsh(l, bitOffset)
 
@@ -63,7 +64,7 @@ func CubeRootPrefix(prefix []byte, bitLen int) ([]byte, error) {
 
 	cube := new(big.Int)
 	if cube.Exp(root, THREE, nil).Cmp(l) < 0 {
-		return nil, errors.New("root floor too low")
+		return nil, errors.New("root floor too low - implement the paper algo")
 	} else if cube.Exp(root, THREE, nil).Cmp(u) > 0 {
 		panic("root floor higher than original cube")
 	}
