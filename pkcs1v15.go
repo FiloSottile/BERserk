@@ -1,4 +1,4 @@
-package BERserker
+package BERserk
 
 import (
 	"crypto"
