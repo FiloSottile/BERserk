@@ -1,5 +1,11 @@
 package BERserker
 
+import (
+	"crypto"
+	"crypto/rsa"
+	"errors"
+)
+
 type DigestInfoTemplate struct {
 	Prefix, Suffix  []byte
 	BitLen, HashLen int
@@ -43,3 +49,21 @@ var (
 		HashLen: 32,
 	}
 )
+
+func SignPKCS1v15(pub *rsa.PublicKey, hash crypto.Hash, hashed []byte) (s []byte, err error) {
+	var template *DigestInfoTemplate
+	switch hash {
+	case crypto.SHA1:
+		template = RSA1024SHA1DigestInfoTemplate
+	case crypto.SHA256:
+		template = RSA1024SHA256DigestInfoTemplate
+	default:
+		return nil, errors.New("unsupported hash")
+	}
+
+	if template.HashLen != len(hashed) {
+		return nil, errors.New("wrong hash length")
+	}
+
+	return []byte("WIP AAAAAAAAAAAAAAAAAAAAA"), nil
+}
