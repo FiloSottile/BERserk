@@ -10,13 +10,13 @@ import (
 
 	"github.com/FiloSottile/BERserk"
 
-	"github.com/cloudflare/cfssl/cli"
-	"github.com/cloudflare/cfssl/cli/genkey"
-	"github.com/cloudflare/cfssl/csr"
-	"github.com/cloudflare/cfssl/errors"
-	"github.com/cloudflare/cfssl/helpers"
-	"github.com/cloudflare/cfssl/signer"
-	"github.com/cloudflare/cfssl/signer/local"
+	"github.com/FiloSottile/BERserk/_vendor/github.com/cloudflare/cfssl/cli"
+	"github.com/FiloSottile/BERserk/_vendor/github.com/cloudflare/cfssl/cli/genkey"
+	"github.com/FiloSottile/BERserk/_vendor/github.com/cloudflare/cfssl/csr"
+	"github.com/FiloSottile/BERserk/_vendor/github.com/cloudflare/cfssl/errors"
+	"github.com/FiloSottile/BERserk/_vendor/github.com/cloudflare/cfssl/helpers"
+	"github.com/FiloSottile/BERserk/_vendor/github.com/cloudflare/cfssl/signer"
+	"github.com/FiloSottile/BERserk/_vendor/github.com/cloudflare/cfssl/signer/local"
 )
 
 func main() {
