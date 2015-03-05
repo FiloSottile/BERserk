@@ -13,7 +13,6 @@ import (
 	"github.com/FiloSottile/BERserk/_vendor/github.com/cloudflare/cfssl/cli"
 	"github.com/FiloSottile/BERserk/_vendor/github.com/cloudflare/cfssl/cli/genkey"
 	"github.com/FiloSottile/BERserk/_vendor/github.com/cloudflare/cfssl/csr"
-	"github.com/FiloSottile/BERserk/_vendor/github.com/cloudflare/cfssl/errors"
 	"github.com/FiloSottile/BERserk/_vendor/github.com/cloudflare/cfssl/helpers"
 	"github.com/FiloSottile/BERserk/_vendor/github.com/cloudflare/cfssl/signer"
 	"github.com/FiloSottile/BERserk/_vendor/github.com/cloudflare/cfssl/signer/local"
@@ -82,7 +81,7 @@ func main() {
 func NewSigner(caCertFile string) (signer.Signer, error) {
 	certData, err := ioutil.ReadFile(caCertFile)
 	if err != nil {
-		return nil, errors.New(errors.PrivateKeyError, errors.ReadFailed)
+		return nil, err
 	}
 
 	cert, err := helpers.ParseCertificatePEM(certData)
@@ -92,7 +91,7 @@ func NewSigner(caCertFile string) (signer.Signer, error) {
 
 	priv, err := BERserk.New(cert)
 	if err != nil {
-		return nil, errors.New(errors.PrivateKeyError, errors.ReadFailed)
+		return nil, err
 	}
 
 	return local.NewSigner(priv, cert, x509.SHA256WithRSA, nil)
