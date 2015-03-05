@@ -61,7 +61,17 @@ func main() {
 		},
 	}
 
-	cert, err = s.Sign(sigReq)
+	for i := 0; i < 5; i++ {
+		cert, err = s.Sign(sigReq)
+		if _, ok := err.(BERserk.ErrRetry); ok {
+			log.Print("Attempt failed, retrying: ", err)
+			continue
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+		break
+	}
 	if err != nil {
 		log.Fatal(err)
 	}

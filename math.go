@@ -2,7 +2,6 @@ package BERserk
 
 import (
 	"bytes"
-	"errors"
 	"math/big"
 )
 
@@ -11,6 +10,12 @@ var (
 	ONE       = big.NewInt(1)
 	THREE     = big.NewInt(3)
 )
+
+type ErrRetry string
+
+func (e ErrRetry) Error() string {
+	return string(e)
+}
 
 func BigIntCubeRootFloor(n *big.Int) *big.Int {
 	// http://math.stackexchange.com/a/263113
@@ -29,7 +34,7 @@ func BigIntCubeRootFloor(n *big.Int) *big.Int {
 
 func CubeRootSuffix(suffix []byte) ([]byte, error) {
 	if suffix[len(suffix)-1]&1 == 0 {
-		return nil, errors.New("suffix is even")
+		return nil, ErrRetry("suffix is even")
 	}
 
 	suffixInt := new(big.Int).SetBytes(suffix)
@@ -64,7 +69,7 @@ func CubeRootPrefix(prefix []byte, bitLen int) ([]byte, error) {
 
 	cube := new(big.Int)
 	if cube.Exp(root, THREE, nil).Cmp(l) < 0 {
-		return nil, errors.New("root floor too low - implement the paper algo")
+		return nil, ErrRetry("root floor too low - implement the paper algo")
 	} else if cube.Exp(root, THREE, nil).Cmp(u) > 0 {
 		panic("root floor higher than original cube")
 	}
@@ -78,7 +83,7 @@ func CubeRootPrefix(prefix []byte, bitLen int) ([]byte, error) {
 		}
 	}
 
-	return nil, errors.New("prefix search failed")
+	return nil, ErrRetry("prefix search failed")
 }
 
 // high : result of CubeRootPrefix
@@ -103,5 +108,5 @@ func BruteforceMiddle(high, low, target []byte, offset int) ([]byte, error) {
 		root.Add(root, inc)
 	}
 
-	return nil, errors.New("middle bruteforce failed")
+	return nil, ErrRetry("middle bruteforce failed")
 }
