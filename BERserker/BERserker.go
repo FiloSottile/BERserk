@@ -94,5 +94,5 @@ func NewSigner(caCertFile string) (signer.Signer, error) {
 		return nil, err
 	}
 
-	return local.NewSigner(priv, cert, x509.SHA256WithRSA, nil)
+	return local.NewSigner(priv, cert, x509.SHA1WithRSA, nil)
 }

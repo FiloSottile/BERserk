@@ -65,5 +65,25 @@ func SignPKCS1v15(pub *rsa.PublicKey, hash crypto.Hash, hashed []byte) (s []byte
 		return nil, errors.New("wrong hash length")
 	}
 
-	return []byte("WIP AAAAAAAAAAAAAAAAAAAAA"), nil
+	targetSuffix := append(template.Suffix, hashed...)
+	sigLow, err := CubeRootSuffix(targetSuffix)
+	if err != nil {
+		return nil, err
+	}
+	sigHi, err := CubeRootPrefix(template.Prefix, template.BitLen)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]byte, template.BitLen/8)
+	for i := 1; i <= len(result); i++ {
+		if i <= len(sigHi) {
+			result[len(result)-i] |= sigHi[len(sigHi)-i]
+		}
+		if i <= len(sigLow) {
+			result[len(result)-i] |= sigLow[len(sigLow)-i]
+		}
+	}
+
+	return result, nil
 }
