@@ -30,7 +30,7 @@ var (
 		},
 		HashLen: 20,
 	}
-	RSA1024SHA256DigestInfoTemplate = &DigestInfoTemplate{
+	RSA1024SHA256DigestInfoTemplate = &DigestInfoTemplate{ // BROKEN
 		BitLen: 1024,
 		Prefix: []byte{
 			0x00, 0x01, 0xFF, 0x00, // PKCS#1 padding
@@ -52,13 +52,11 @@ var (
 
 func SignPKCS1v15(pub *rsa.PublicKey, hash crypto.Hash, hashed []byte) (s []byte, err error) {
 	var template *DigestInfoTemplate
-	switch hash {
-	case crypto.SHA1:
+	switch {
+	case hash == crypto.SHA1 && pub.N.BitLen() == 1024:
 		template = RSA1024SHA1DigestInfoTemplate
-	case crypto.SHA256:
-		template = RSA1024SHA256DigestInfoTemplate
 	default:
-		return nil, errors.New("unsupported hash")
+		return nil, errors.New("unsupported hash / keyLen combination")
 	}
 
 	if template.HashLen != len(hashed) {

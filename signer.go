@@ -12,24 +12,26 @@ type Signer struct {
 	publicKey *rsa.PublicKey
 }
 
-func New(ca *x509.Certificate) (*Signer, error) {
+func New(ca *x509.Certificate) (*Signer, x509.SignatureAlgorithm, error) {
 	if ca.PublicKeyAlgorithm != x509.RSA {
-		return nil, errors.New("only RSA is supported")
+		return nil, 0, errors.New("only RSA is supported")
 	}
 
 	pub, ok := ca.PublicKey.(*rsa.PublicKey)
 	if !ok {
-		return nil, errors.New("failed to get certificate RSA key")
+		return nil, 0, errors.New("failed to get certificate RSA key")
 	}
 
-	if pub.N.BitLen() > 1024 {
-		return nil, errors.New("only RSA 1024 is supported")
-	}
 	if pub.E != 3 {
-		return nil, errors.New("only RSA e = 3 is supported")
+		return nil, 0, errors.New("only RSA e = 3 is supported")
 	}
 
-	return &Signer{publicKey: pub}, nil
+	switch {
+	case pub.N.BitLen() == 1024:
+		return &Signer{publicKey: pub}, x509.SHA1WithRSA, nil
+	default:
+		return nil, 0, errors.New("unsupported public key length")
+	}
 }
 
 func (s *Signer) Public() crypto.PublicKey {
@@ -37,5 +39,10 @@ func (s *Signer) Public() crypto.PublicKey {
 }
 
 func (s *Signer) Sign(rand io.Reader, msg []byte, opts crypto.SignerOpts) (signature []byte, err error) {
-	return SignPKCS1v15(s.publicKey, opts.HashFunc(), msg)
+	switch {
+	case s.publicKey.N.BitLen() == 1024 && opts.HashFunc() == crypto.SHA1:
+		return SignPKCS1v15(s.publicKey, opts.HashFunc(), msg)
+	default:
+		return nil, errors.New("wrong opts.HashFunc()")
+	}
 }

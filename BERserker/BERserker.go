@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -89,10 +88,10 @@ func NewSigner(caCertFile string) (signer.Signer, error) {
 		return nil, err
 	}
 
-	priv, err := BERserk.New(cert)
+	priv, sigAlg, err := BERserk.New(cert)
 	if err != nil {
 		return nil, err
 	}
 
-	return local.NewSigner(priv, cert, x509.SHA1WithRSA, nil)
+	return local.NewSigner(priv, cert, sigAlg, nil)
 }
