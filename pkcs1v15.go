@@ -3,8 +3,6 @@ package BERserk
 import (
 	"crypto"
 	"errors"
-	"log"
-	"math/big"
 )
 
 type DigestInfoTemplate struct {
@@ -122,9 +120,6 @@ func SignPKCS1v15(bitLen int, hash crypto.Hash, hashed []byte) (s []byte, err er
 			result[len(result)-i] |= m[len(m)-i]
 		}
 	}
-
-	cube := new(big.Int).Exp(new(big.Int).SetBytes(result), THREE, nil).Bytes()
-	log.Printf("%x ^ 3 = %x", result, cube)
 
 	return result, nil
 }
