@@ -54,6 +54,16 @@ var (
 	}
 )
 
+// SignPKCS1v15 is the core generic implementation of BERserk. It will generate
+// a signature of hashed that will look valid for any RSA public key of the
+// given length (to implementations vulnerable to BERserk).
+//
+// ErrRetry is returned when a signature can't be generated for the specific
+// input. Change the message and retry.
+//
+// bitLen is the length of the public key, only 1024 and 2048 are supported.
+// hash is the function applied to the message to get hashed.
+// Only hash == crypto.SHA1 is supported.
 func SignPKCS1v15(bitLen int, hash crypto.Hash, hashed []byte) (s []byte, err error) {
 	var template *DigestInfoTemplate
 	switch {

