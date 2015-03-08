@@ -29,6 +29,8 @@ func New(ca *x509.Certificate) (*Signer, x509.SignatureAlgorithm, error) {
 	switch {
 	case pub.N.BitLen() == 1024:
 		return &Signer{publicKey: pub}, x509.SHA1WithRSA, nil
+	case pub.N.BitLen() == 2048:
+		return &Signer{publicKey: pub}, x509.SHA1WithRSA, nil
 	default:
 		return nil, 0, errors.New("unsupported public key length")
 	}
@@ -40,8 +42,10 @@ func (s *Signer) Public() crypto.PublicKey {
 
 func (s *Signer) Sign(rand io.Reader, msg []byte, opts crypto.SignerOpts) (signature []byte, err error) {
 	switch {
+	case s.publicKey.N.BitLen() == 2048 && opts.HashFunc() == crypto.SHA1:
+		fallthrough
 	case s.publicKey.N.BitLen() == 1024 && opts.HashFunc() == crypto.SHA1:
-		return SignPKCS1v15(s.publicKey, opts.HashFunc(), msg)
+		return SignPKCS1v15(s.publicKey.N.BitLen(), opts.HashFunc(), msg)
 	default:
 		return nil, errors.New("wrong opts.HashFunc()")
 	}
