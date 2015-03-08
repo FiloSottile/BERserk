@@ -33,12 +33,11 @@ func New(ca *x509.Certificate) (*Signer, x509.SignatureAlgorithm, error) {
 		return nil, 0, errors.New("only RSA e = 3 is supported")
 	}
 
-	switch {
-	case pub.N.BitLen() == 1024 || pub.N.BitLen() == 2048:
-		return &Signer{publicKey: pub}, x509.SHA1WithRSA, nil
-	default:
+	if pub.N.BitLen() != 1024 && pub.N.BitLen() != 2048 {
 		return nil, 0, errors.New("unsupported public key length")
 	}
+
+	return &Signer{publicKey: pub}, x509.SHA1WithRSA, nil
 }
 
 // Public returns the Signer's CA RSA public key
@@ -55,12 +54,9 @@ func (s *Signer) Public() crypto.PublicKey {
 // rand is ignored and can be nil.
 // Only opts.HashFunc() == crypto.SHA1 is supported.
 func (s *Signer) Sign(rand io.Reader, msg []byte, opts crypto.SignerOpts) (signature []byte, err error) {
-	switch {
-	case s.publicKey.N.BitLen() == 2048 && opts.HashFunc() == crypto.SHA1:
-		fallthrough
-	case s.publicKey.N.BitLen() == 1024 && opts.HashFunc() == crypto.SHA1:
-		return SignPKCS1v15(s.publicKey.N.BitLen(), opts.HashFunc(), msg)
-	default:
+	if opts.HashFunc() != crypto.SHA1 {
 		return nil, errors.New("wrong opts.HashFunc()")
 	}
+
+	return SignPKCS1v15(s.publicKey.N.BitLen(), opts.HashFunc(), msg)
 }
