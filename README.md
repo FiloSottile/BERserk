@@ -16,6 +16,8 @@ BERserk was big but it happened on the same day as ShellShock and no one noticed
 
 `github.com/FiloSottile/BERserk.Signer` is a Go `crypto.Signer` that, given a RSA public key with e = 3 and length 1024 or 2048, will generate (SHA1) PKCS#1 signatures that exploit BERserk without knowledge of the private key.
 
+[GoDoc](https://godoc.org/github.com/FiloSottile/BERserk) will help you if you use this as a library.
+
 ## The tool
 
 There's also a command line tool that generates a HTTPS certificate given a fitting CA and a CSR in [cfssl](https://github.com/cloudflare/cfssl) format.
