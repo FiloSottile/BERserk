@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/hex"
 	"math/big"
+	"math/rand"
 	"testing"
+	"time"
 )
 
 func TestCubeRootSuffixFixed(t *testing.T) {
@@ -71,4 +73,14 @@ func TestRSA2048SHA1MiddlePaper(t *testing.T) {
 	}
 	cube := new(big.Int).Exp(new(big.Int).SetBytes(res), THREE, nil).Bytes()
 	t.Logf("s: %x ^ 3 = %x", res, cube)
+}
+
+func BenchmarkBigIntSquareRootFloor(b *testing.B) {
+	scale := new(big.Int).Lsh(ONE, 640)
+	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
+	n := new(big.Int).Rand(rnd, scale)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		BigIntSquareRootFloor(n)
+	}
 }
