@@ -26,27 +26,27 @@ func BigIntCubeRootFloor(n *big.Int) *big.Int {
 	a := new(big.Int).Set(n) // TODO: optimize
 	for cube.Exp(a, THREE, nil).Cmp(n) > 0 {
 		// a = (2*a + n/a^2) / 3
-		x.Div(n, x.Mul(a, a))
+		x.Quo(n, x.Mul(a, a))
 		x.Add(x.Add(x, a), a)
-		a.Div(x, THREE)
+		a.Quo(x, THREE)
 	}
 
 	return a
 }
 
 func BigIntSquareRootFloor(n *big.Int) *big.Int {
-	// adapted from github.com/cznic/mathutil.SqrtBig
-	px, nx, x := new(big.Int), new(big.Int), new(big.Int)
-	x.SetBit(x, n.BitLen()/2+1, 1)
+	// adapted from mini-gmp
+	u, t := new(big.Int), new(big.Int)
+	t.SetBit(t, n.BitLen()/2+1, 1)
 	for {
-		nx.Rsh(nx.Add(x, nx.Div(n, x)), 1)
-		if nx.Cmp(x) == 0 || nx.Cmp(px) == 0 {
-			break
+		u.Set(t)
+		t.Quo(n, u)
+		t.Add(t, u)
+		t.Rsh(t, 1)
+		if t.Cmp(u) >= 0 {
+			return u
 		}
-		px.Set(x)
-		x.Set(nx)
 	}
-	return x
 }
 
 func CubeRootSuffix(suffix []byte) ([]byte, error) {
@@ -153,25 +153,34 @@ func BruteforceMiddle(high, low, target []byte, offset int) ([]byte, error) {
 }
 
 func RSA2048SHA1Middle(high, low, target []byte, offset int) ([]byte, error) {
-	// This is terribly specific, so make a couple assertions (TODO: needed?).
+	// This is terribly specific, so make a couple assertions.
 	if offset != 158 || len(target) != 6 {
 		return nil, errors.New("incorrect use of RSA2048SHA1Middle")
 	}
 
-	highInt := new(big.Int).SetBytes(high)
-	lowInt := new(big.Int).SetBytes(low)
+	var (
+		highInt   = new(big.Int).SetBytes(high)
+		lowInt    = new(big.Int).SetBytes(low)
+		targetInt = new(big.Int).SetBytes(target)
 
-	inc := new(big.Int).Lsh(ONE, 140/2*8)
+		inc = new(big.Int).Lsh(ONE, 140/2*8)
+
+		vNum, vDen, hl3 = new(big.Int), new(big.Int), new(big.Int)
+		res, cube       = new(big.Int), new(big.Int)
+	)
 
 	// 3m^2 * (h + l) + (h + l)^3 + 3(h + l)^2 * m -> target
-	// 3(h + l)^2 * m is too small, ignore it (checked before returning)
+	// 3(h + l)^2 * m is too small, we can ignore it
 	// Solve for m the other two: m = sqrt((target - (h + l)^3) / (3 * (h + l)))
 	// V = m^2 = (target - (h + l)^3) / (3 * (h + l))
 
-	mask := new(big.Int).Lsh(ONE, uint(len(target)+offset)*8)
+	// Check if it worked, otherwise increase a low-ish position of h and retry
 
-	vNum, vDen, hl3, res := new(big.Int), new(big.Int), new(big.Int), new(big.Int)
-	// bruteLoop:
+	maskV := new(big.Int).Lsh(ONE, uint(len(target)+offset)*8)
+	maskV.Add(maskV, MINUS_ONE)
+	maskTarget := new(big.Int).Lsh(ONE, uint(len(target))*8)
+	maskTarget.Add(maskTarget, MINUS_ONE)
+
 	for {
 		highInt.Add(highInt, inc)
 
@@ -180,38 +189,33 @@ func RSA2048SHA1Middle(high, low, target []byte, offset int) ([]byte, error) {
 		hl3.Exp(hl3, THREE, nil)
 		vNum.Lsh(vNum.SetBytes(target), uint(offset*8))
 		vNum.Add(vNum, hl3.Neg(hl3))
-		vNum.Mod(vNum, mask)
-		// if vNum.BitLen() > 1300 {
-		// 	continue
-		// }
+		vNum.And(vNum, maskV)
 
 		// vDen = 3 * (h + l)
 		vDen.Mul(vDen.Add(highInt, lowInt), THREE)
-		vDen.Mod(vDen, mask)
+		vDen.And(vDen, maskV)
 
-		m := BigIntSquareRootFloor(vDen.Div(vNum, vDen))
+		// m = sqrt(vNum/vDen) / 2^bitLen(l)
+		vNum.Quo(vNum, vDen)
+		m := BigIntSquareRootFloor(vNum)
 		m.Lsh(m.Rsh(m, uint(len(low)*8)), uint(len(low)*8))
 
 		res.Add(res.Add(highInt, lowInt), m)
-		cubeBytes := new(big.Int).Exp(res, THREE, nil).Bytes()
-		if bytes.Equal(target,
-			cubeBytes[len(cubeBytes)-offset-len(target):len(cubeBytes)-offset]) {
+		cube.Exp(res, THREE, nil)
+		cube.And(cube.Rsh(cube, uint(offset*8)), maskTarget)
+		if cube.Cmp(targetInt) == 0 {
 			break
 		}
 
-		// log.Printf("RITENTA SARAI PIU FORTUNATO %x",
-		// 	cubeBytes[len(cubeBytes)-offset-len(target):len(cubeBytes)-offset+1])
-
+		// try also rounding m up instead of truncating ti
 		m.Lsh(m.Add(m.Rsh(m, uint(len(low)*8)), ONE), uint(len(low)*8))
+
 		res.Add(res.Add(highInt, lowInt), m)
-		cubeBytes = new(big.Int).Exp(res, THREE, nil).Bytes()
-		if bytes.Equal(target,
-			cubeBytes[len(cubeBytes)-offset-len(target):len(cubeBytes)-offset]) {
+		cube.Exp(res, THREE, nil)
+		cube.And(cube.Rsh(cube, uint(offset*8)), maskTarget)
+		if cube.Cmp(targetInt) == 0 {
 			break
 		}
-
-		// log.Printf("RITENTA SARAI PIU FORTUNATO %x",
-		// 	cubeBytes[len(cubeBytes)-offset-len(target):len(cubeBytes)-offset+1])
 	}
 
 	resBytes := make([]byte, 2048/8)
