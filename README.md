@@ -44,6 +44,10 @@ BERserker CA.pem csr.json | cfssljson -bare
 x509: only RSA and ECDSA private keys supported
 ```
 
+## Demo
+
+There's a live demo at https://berserk.filippo.io
+
 ## Authors
 
 * Filippo Valsorda [@FiloSottile](https://twitter.com/FiloSottile)
