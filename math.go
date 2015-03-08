@@ -3,7 +3,6 @@ package BERserk
 import (
 	"bytes"
 	"errors"
-	"log"
 	"math/big"
 )
 
@@ -147,75 +146,48 @@ func RSA2048SHA1Middle(high, low, target []byte, offset int) ([]byte, error) {
 
 	mask := new(big.Int).Lsh(ONE, uint(len(target)+offset)*8)
 
-	vNum, vDen, hl3, res, t := new(big.Int), new(big.Int), new(big.Int), new(big.Int), new(big.Int)
+	vNum, vDen, hl3, res := new(big.Int), new(big.Int), new(big.Int), new(big.Int)
+	// bruteLoop:
 	for {
 		highInt.Add(highInt, inc)
 
-		// target - (h + l)^3
-		hl3.Exp(hl3.Add(highInt, lowInt), THREE, nil)
+		// vNum = target - (h + l)^3
+		hl3.Add(highInt, lowInt)
+		hl3.Exp(hl3, THREE, nil)
 		vNum.Lsh(vNum.SetBytes(target), uint(offset*8))
 		vNum.Add(vNum, hl3.Neg(hl3))
 		vNum.Mod(vNum, mask)
-		if vNum.BitLen() > 1290 {
-			continue
-		}
+		// if vNum.BitLen() > 1300 {
+		// 	continue
+		// }
 
-		// log.Printf("hl3 = %x", hl3)
-		// log.Printf("vNum = %v", vNum)
-
-		// 3 * (h + l)
-		vDen.Mod(vDen.Mul(vDen.Add(highInt, lowInt), THREE), mask)
-
-		// log.Printf("vDen = %v", vDen)
-		// log.Printf("vNum = %v", vNum)
-		// v := new(big.Int).Div(vNum, vDen)
-		// log.Printf("v.BitLen = %v", v.BitLen())
-		// log.Printf("vDen.BitLen = %v", vDen.BitLen())
-		// log.Printf("vNum.BitLen = %v", vNum.BitLen())
+		// vDen = 3 * (h + l)
+		vDen.Mul(vDen.Add(highInt, lowInt), THREE)
+		vDen.Mod(vDen, mask)
 
 		m := BigIntSquareRootFloor(vDen.Div(vNum, vDen))
-		// log.Printf("m = %x", m.Bytes())
 		m.Lsh(m.Rsh(m, uint(len(low)*8)), uint(len(low)*8))
-		// log.Printf("m = %x", m.Bytes())
-
-		// log.Printf("l = %x", low)
 
 		res.Add(res.Add(highInt, lowInt), m)
 		cubeBytes := new(big.Int).Exp(res, THREE, nil).Bytes()
-		if !bytes.Equal(target,
+		if bytes.Equal(target,
 			cubeBytes[len(cubeBytes)-offset-len(target):len(cubeBytes)-offset]) {
-			log.Printf("RITENTA SARAI PIU FORTUNATO %x",
-				cubeBytes[len(cubeBytes)-offset-len(target):len(cubeBytes)-offset+1])
-
-			// HACK
-			m.Lsh(m.Add(m.Rsh(m, uint(len(low)*8)), ONE), uint(len(low)*8))
-			res.Add(res.Add(highInt, lowInt), m)
-			cubeBytes := new(big.Int).Exp(res, THREE, nil).Bytes()
-			if !bytes.Equal(target,
-				cubeBytes[len(cubeBytes)-offset-len(target):len(cubeBytes)-offset]) {
-				log.Printf("RITENTA SARAI PIU FORTUNATO %x",
-					cubeBytes[len(cubeBytes)-offset-len(target):len(cubeBytes)-offset+1])
-
-				continue
-			}
+			break
 		}
 
-		// Double check that the ignored term is not bleeding into our target:
-		// 3(h + l)^2 * m
-		tBytes := t.Mul(t.Mul(t.Exp(t.Add(highInt, lowInt), TWO, nil), THREE), m).Bytes()
-		tBytes = tBytes[len(tBytes)-offset-len(target) : len(tBytes)-offset]
-		if !bytes.Equal(tBytes, []byte{0, 0, 0, 0, 0, 0}) {
-			continue
+		// log.Printf("RITENTA SARAI PIU FORTUNATO %x",
+		// 	cubeBytes[len(cubeBytes)-offset-len(target):len(cubeBytes)-offset+1])
+
+		m.Lsh(m.Add(m.Rsh(m, uint(len(low)*8)), ONE), uint(len(low)*8))
+		res.Add(res.Add(highInt, lowInt), m)
+		cubeBytes = new(big.Int).Exp(res, THREE, nil).Bytes()
+		if bytes.Equal(target,
+			cubeBytes[len(cubeBytes)-offset-len(target):len(cubeBytes)-offset]) {
+			break
 		}
 
-		log.Printf("        (h + l)^3 = %x", hl3.Bytes())
-		log.Printf("   3(h + l)^2 * m = %x", t.Bytes())
-		tmp := new(big.Int).Exp(m, THREE, nil)
-		log.Printf("              m^3 = %x", tmp.Bytes())
-		tmp.Mul(tmp.Mul(tmp.Mul(THREE, m), m), new(big.Int).Add(highInt, lowInt))
-		log.Printf("3 * m^2 * (h + l) = %x", tmp.Bytes())
-
-		break
+		// log.Printf("RITENTA SARAI PIU FORTUNATO %x",
+		// 	cubeBytes[len(cubeBytes)-offset-len(target):len(cubeBytes)-offset+1])
 	}
 
 	resBytes := make([]byte, 2048/8)

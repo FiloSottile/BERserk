@@ -95,9 +95,19 @@ func SignPKCS1v15(bitLen int, hash crypto.Hash, hashed []byte) (s []byte, err er
 	if err != nil {
 		return nil, err
 	}
+
 	sigHi, err := CubeRootPrefix(template.Prefix, template.BitLen)
 	if err != nil {
 		return nil, err
+	}
+
+	var m []byte
+	if template == RSA2048SHA1DigestInfoTemplate {
+		m, err = RSA2048SHA1Middle(sigHi, sigLow, template.Middle,
+			template.MiddleOffset+len(template.Suffix)+template.HashLen)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	result := make([]byte, template.BitLen/8)
@@ -108,18 +118,8 @@ func SignPKCS1v15(bitLen int, hash crypto.Hash, hashed []byte) (s []byte, err er
 		if i <= len(sigLow) {
 			result[len(result)-i] |= sigLow[len(sigLow)-i]
 		}
-	}
-
-	if template == RSA2048SHA1DigestInfoTemplate {
-		m, err := RSA2048SHA1Middle(sigHi, sigLow, template.Middle,
-			template.MiddleOffset+len(template.Suffix)+template.HashLen)
-		if err != nil {
-			return nil, err
-		}
-		for i := 1; i <= len(result); i++ {
-			if i <= len(m) {
-				result[len(result)-i] |= m[len(m)-i]
-			}
+		if i <= len(m) {
+			result[len(result)-i] |= m[len(m)-i]
 		}
 	}
 
