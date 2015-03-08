@@ -1,7 +1,6 @@
 # BERserk
 
-A Go implementation of the BERserk attack against Mozilla NSS ASN.1 parsing of PKCS#1 RSA signatures with e = 3.  
-Complete of a certificate generation tool, works with CAs in the trust store.
+A Go implementation of the BERserk attack against Mozilla NSS ASN.1 parsing of PKCS#1 RSA signatures with e = 3. Complete of a certificate generation tool, works with CAs in the trust store.
 
 ## The attack
 
