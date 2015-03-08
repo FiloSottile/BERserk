@@ -27,9 +27,7 @@ func New(ca *x509.Certificate) (*Signer, x509.SignatureAlgorithm, error) {
 	}
 
 	switch {
-	case pub.N.BitLen() == 1024:
-		return &Signer{publicKey: pub}, x509.SHA1WithRSA, nil
-	case pub.N.BitLen() == 2048:
+	case pub.N.BitLen() == 1024 || pub.N.BitLen() == 2048:
 		return &Signer{publicKey: pub}, x509.SHA1WithRSA, nil
 	default:
 		return nil, 0, errors.New("unsupported public key length")
