@@ -1,3 +1,8 @@
+// A BERserk certificate generation tool based on cfssl and crypto.Signer.
+//
+// Works with Go 1.5 or higher (? - probably).
+//
+// See: https://github.com/FiloSottile/BERserk/blob/master/README.md#the-tool
 package main
 
 import (
@@ -44,7 +49,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	s, err := NewSigner(caCertFile)
+	s, err := newSigner(caCertFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -77,7 +82,7 @@ func main() {
 	cli.PrintCert(key, csrBytes, cert)
 }
 
-func NewSigner(caCertFile string) (signer.Signer, error) {
+func newSigner(caCertFile string) (signer.Signer, error) {
 	certData, err := ioutil.ReadFile(caCertFile)
 	if err != nil {
 		return nil, err

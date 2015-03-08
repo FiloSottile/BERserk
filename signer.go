@@ -1,3 +1,11 @@
+// A Go implementation of the BERserk attack against Mozilla NSS ASN.1 parsing
+// of PKCS#1 RSA signatures with e = 3.
+//
+// BERserk was big but it happened on the same day as ShellShock and no one
+// noticed. So much that there isn't neither a live test for it nor a tool to
+// exploit it. So here we are.
+//
+// See also https://github.com/FiloSottile/BERserk/blob/master/README.md
 package BERserk
 
 import (
